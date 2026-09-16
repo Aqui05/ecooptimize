@@ -1,0 +1,60 @@
+version: "3.8"
+
+services:
+  broker:
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./broker/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: ecooptimize
+      MYSQL_USER: ecooptimize
+      MYSQL_PASSWORD: ecooptimize
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./backend/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DB_DRIVER: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ecooptimize
+      DB_PASSWORD: ecooptimize
+      DB_NAME: ecooptimize
+      MQTT_URL: mqtt://broker:1883
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    depends_on:
+      - broker
+      - mysql
+    restart: unless-stopped
+
+  simulator:
+    build: ./simulator
+    environment:
+      MQTT_HOST: broker
+      MQTT_PORT: 1883
+      NODE_COUNT: 4
+      PUBLISH_INTERVAL_SECONDS: 2
+    depends_on:
+      - broker
+    restart: unless-stopped
+
+volumes:
+  mysql_data:

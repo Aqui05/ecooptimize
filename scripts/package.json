@@ -1,0 +1,8 @@
+{
+  "name": "ecooptimize-scripts",
+  "private": true,
+  "description": "Outils de développement local (broker MQTT embarqué pour tester sans Docker)",
+  "dependencies": {
+    "aedes": "0.51.3"
+  }
+}

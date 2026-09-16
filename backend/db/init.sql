@@ -1,0 +1,19 @@
+CREATE TABLE IF NOT EXISTS readings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  node_id VARCHAR(64) NOT NULL,
+  ts DATETIME NOT NULL,
+  online TINYINT(1) NOT NULL DEFAULT 1,
+  production_kw DECIMAL(6,2) NOT NULL,
+  consumption_kw DECIMAL(6,2) NOT NULL,
+  distributed_kw DECIMAL(6,2) NOT NULL,
+  INDEX idx_node_ts (node_id, ts)
+);
+
+CREATE TABLE IF NOT EXISTS alerts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  node_id VARCHAR(64) NOT NULL,
+  ts DATETIME NOT NULL,
+  type VARCHAR(32) NOT NULL,
+  message VARCHAR(255) NOT NULL,
+  INDEX idx_ts (ts)
+);
