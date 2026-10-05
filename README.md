@@ -97,10 +97,3 @@ pip install asciinema
 asciinema rec -c "python3 scripts/watch.py --interval 3 --duration 20" demo/demo.cast
 npx svg-term-cli --in demo/demo.cast --out demo/demo.svg --window --no-cursor
 ```
-
-## Prochaines étapes
-
-- Tests automatisés sur la logique de l'optimiseur (`src/optimizer.js`)
-- CI GitHub Actions (lint + tests à chaque push)
-- Déploiement avec un vrai mécanisme de tolérance aux pannes (réplication,
-  health checks Docker)
