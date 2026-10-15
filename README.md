@@ -1,29 +1,18 @@
 # EcoOptimize
 
-Plateforme IoT distribuée pour la surveillance et l'optimisation en temps
-réel de la production, la distribution et la consommation d'énergie verte
-à partir d'un réseau de capteurs connectés.
-
-Ce projet a été initialement conceptualisé dans le cadre du **Challenge App
-Afrique** (RFI). Cette version en fait une réalisation concrète et
-fonctionnelle, pensée en lien avec les thématiques du **Master 1 Computer
-and Network Systems** (Université Paris-Saclay) : systèmes distribués,
-tolérance aux pannes, administration réseau, technologies logicielles
-(Docker, MQTT, API REST).
+Plateforme IoT distribuée pour la surveillance et l'optimisation en temps réel de la production et de la consommation d'énergie verte à partir d'un réseau de capteurs connectés.
 
 ## Démo
 
-![Démo EcoOptimize](demo/demo.svg)
+[![Démo EcoOptimize](demo/demo.svg)](demo/demo.svg)
 
-Le tableau de bord (`scripts/watch.py`) interrogeant l'API en direct :
-production/consommation totales, état de chaque noeud, alertes de surcharge
-et suggestions de répartition entre noeuds.
+Le tableau de bord (`scripts/watch.py`) interroge l'API en direct : production et consommation totales, état de chaque nœud, alertes de surcharge et suggestions de répartition entre nœuds.
 
 ## Architecture
 
 ```
 [simulateur Python] --MQTT--> [broker Mosquitto] --MQTT--> [backend Node.js]
-     (4 noeuds simulés,                                          |
+     (4 nœuds simulés,                                          |
       pannes/pics aléatoires)                          stocke dans MySQL
                                                                    |
                                                           détecte les surcharges
@@ -37,26 +26,35 @@ et suggestions de répartition entre noeuds.
 ```
 
 | Dossier | Rôle |
-|---|---|
-| `simulator/` | Simule plusieurs noeuds (sites de production/consommation d'énergie), publie des mesures périodiques via MQTT, avec pannes et pics de charge aléatoires |
+| --- | --- |
+| `simulator/` | Simule plusieurs nœuds (sites de production/consommation d'énergie) et publie des mesures périodiques via MQTT, avec pannes et pics de charge aléatoires |
 | `broker/` | Configuration Mosquitto (broker MQTT, utilisé par Docker) |
-| `backend/` | Microservice Node.js : ingestion MQTT, persistance MySQL, détection de surcharge + suggestions de répartition, API REST |
-| `docker-compose.yml` | Orchestration complète (broker + MySQL + backend + simulateur) |
-| `scripts/` | Outils de dev : lancer le stack sans Docker, afficher les données en direct |
-| `demo/` | Enregistrement de démo (asciicast + SVG animé) |
+| `backend/` | Microservice Node.js : ingestion MQTT, persistance MySQL, détection de surcharge et suggestions de répartition, API REST |
+| `docker-compose.yml` | Orchestration complète (broker, MySQL, backend, simulateur) |
+| `scripts/` | Outils de développement : lancer la stack sans Docker, afficher les données en direct |
+| `demo/` | Enregistrement de démonstration (asciicast et SVG animé) |
 
-L'application mobile Flutter (dashboard + historique par noeud) qui
-consomme cette API vit dans un repo séparé : `ecooptimize_mobile`.
+L'application mobile Flutter (tableau de bord et historique par nœud) qui consomme cette API se trouve dans un dépôt séparé : `ecooptimize_mobile`.
+
+## Logique de décision
+
+Pour chaque nœud en ligne, le backend calcule le bilan `production − consommation` :
+
+- bilan inférieur à −2 kW : alerte de **surcharge** ;
+- bilan supérieur à +2 kW : le nœud est excédentaire ;
+- nœud qui ne répond plus : alerte `node_offline`.
+
+Chaque nœud en déficit se voit suggérer, par appariement glouton, le nœud excédentaire disposant de la plus grande marge (`src/optimizer.js`).
 
 ## API REST
 
 | Route | Description |
-|---|---|
+| --- | --- |
 | `GET /health` | État du service (connexion MQTT, base de données) |
-| `GET /api/nodes` | Dernier état connu de chaque noeud |
-| `GET /api/nodes/:id/history?limit=100` | Historique d'un noeud |
-| `GET /api/alerts` | Alertes récentes (surcharge, noeud hors ligne) |
-| `GET /api/summary` | Production/consommation totales + suggestions de répartition entre noeuds |
+| `GET /api/nodes` | Dernier état connu de chaque nœud |
+| `GET /api/nodes/:id/history?limit=100` | Historique d'un nœud |
+| `GET /api/alerts` | Alertes récentes (surcharge, nœud hors ligne) |
+| `GET /api/summary` | Production/consommation totales + suggestions de répartition entre nœuds |
 
 ## Lancer le projet
 
@@ -69,8 +67,7 @@ curl http://localhost:4000/api/summary
 
 ### Sans Docker (développement rapide)
 
-Un broker MQTT embarqué + stockage en mémoire, pour itérer vite sans
-dépendance externe :
+Un broker MQTT embarqué et un stockage en mémoire, pour itérer vite sans dépendance externe :
 
 ```bash
 ./scripts/dev_up.sh      # démarre broker + backend + simulateur
@@ -80,14 +77,9 @@ dépendance externe :
 
 ## Résilience
 
-- **Tolérance aux pannes des noeuds** : le simulateur fait passer aléatoirement
-  des noeuds hors ligne ; le backend le détecte et le signale (`node_offline`)
-  sans planter.
-- **Debounce des alertes** : une alerte n'est notifiée qu'au changement d'état
-  (ex. passage en surcharge), pas à chaque message MQTT, pour éviter le bruit.
-- **Résilience de l'API** : `/api/summary`, `/api/nodes` et `/api/alerts` sont
-  interrogés indépendamment côté client — l'échec d'un seul endpoint n'empêche
-  pas d'afficher les autres.
+- **Pannes de nœuds** : le simulateur met aléatoirement des nœuds hors ligne ; le backend le détecte et le signale (`node_offline`) sans s'arrêter.
+- **Anti-répétition des alertes** : une alerte n'est enregistrée qu'au changement d'état (par exemple le passage en surcharge), pas à chaque message MQTT.
+- **Résilience côté client** : `/api/summary`, `/api/nodes` et `/api/alerts` sont interrogés indépendamment ; l'échec d'un seul endpoint n'empêche pas d'afficher les autres.
 
 ## Reproduire la démo
 
