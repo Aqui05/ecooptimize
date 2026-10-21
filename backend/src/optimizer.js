@@ -1,7 +1,7 @@
 // Logique d'optimisation simple pour EcoOptimize.
 // Objectif pedagogique : illustrer une decision distribuee prise a partir
 // de l'etat de plusieurs noeuds, pas un algorithme de recherche operationnelle
-// complet (ca, c'est pour le M1 CNS :)).
+// complet).
 
 const OVERLOAD_THRESHOLD_KW = 2.0; // consommation - production au-dela de ce seuil = surcharge
 
